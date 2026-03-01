@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>你是哪種 PM 溝通型？</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #f5f0e8;
+    --accent: #e8533a;
+    --accent2: #2d6a8f;
+    --gold: #c9972c;
+    --muted: #8a8070;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── INTRO SCREEN ── */
+  #intro {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 0;
+  }
+
+  .tag-line {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: clamp(36px, 8vw, 64px);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 24px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+    display: block;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 480px;
+    margin-bottom: 48px;
+  }
+
+  .deco-line {
+    width: 80px;
+    height: 3px;
+    background: var(--ink);
+    margin-bottom: 48px;
+  }
+
+  .start-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 18px 36px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .start-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 3px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .start-btn:hover { background: var(--accent); }
+  .start-btn:hover::after { transform: scaleX(1); }
+
+  .start-btn svg { transition: transform 0.25s; }
+  .start-btn:hover svg { transform: translateX(4px); }
+
+  .corner-deco {
+    position: absolute;
+    top: 40px; right: 0;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 140px;
+    font-weight: 900;
+    color: rgba(26,26,46,0.04);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* ── QUIZ SCREEN ── */
+  #quiz {
+    display: none;
+    padding: 60px 0;
+    min-height: 100vh;
+  }
+
+  .progress-bar-wrap {
+    margin-bottom: 52px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .progress-track {
+    height: 2px;
+    background: rgba(26,26,46,0.1);
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .q-number {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .question-text {
+    font-family: 'Noto Serif TC', serif;
+    font-size: clamp(20px, 4vw, 28px);
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--ink);
+    margin-bottom: 40px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .option-btn {
+    background: transparent;
+    border: 1.5px solid rgba(26,26,46,0.15);
+    padding: 20px 24px;
+    text-align: left;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    z-index: 0;
+  }
+
+  .option-btn:hover { border-color: var(--ink); }
+  .option-btn:hover::before { transform: scaleX(0.03); }
+
+  .option-btn.selected {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .option-letter {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 700;
+    font-size: 16px;
+    min-width: 20px;
+    color: var(--accent);
+    position: relative; z-index: 1;
+    transition: color 0.2s;
+  }
+
+  .option-btn.selected .option-letter { color: var(--gold); }
+
+  .option-text {
+    position: relative; z-index: 1;
+  }
+
+  /* ── RESULT SCREEN ── */
+  #result {
+    display: none;
+    padding: 60px 0 80px;
+    min-height: 100vh;
+  }
+
+  .result-card {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 52px 48px;
+    margin-bottom: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content: attr(data-emoji);
+    position: absolute;
+    right: -20px; top: -20px;
+    font-size: 160px;
+    opacity: 0.06;
+    line-height: 1;
+    user-select: none;
+  }
+
+  .result-label {
+    font-size: 10px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .result-type {
+    font-family: 'Noto Serif TC', serif;
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 28px;
+  }
+
+  .result-type span {
+    color: var(--accent);
+  }
+
+  .result-desc {
+    font-size: 15px;
+    line-height: 1.9;
+    color: rgba(245,240,232,0.8);
+    max-width: 500px;
+    margin-bottom: 36px;
+  }
+
+  .traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .trait-tag {
+    border: 1px solid rgba(245,240,232,0.2);
+    padding: 6px 14px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: rgba(245,240,232,0.7);
+  }
+
+  .strength-section {
+    padding: 36px 0;
+    border-top: 1px solid rgba(26,26,46,0.1);
+    margin-bottom: 36px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .strength-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(26,26,46,0.06);
+  }
+
+  .strength-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  .strength-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .strength-text h4 {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+
+  .strength-text p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .cta-block {
+    background: linear-gradient(135deg, var(--accent2) 0%, #1a3a52 100%);
+    padding: 40px 40px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-block::after {
+    content: 'PM';
+    position: absolute;
+    right: 20px; bottom: -20px;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 100px;
+    font-weight: 900;
+    opacity: 0.08;
+  }
+
+  .cta-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .cta-block h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .cta-block p {
+    font-size: 14px;
+    opacity: 0.8;
+    line-height: 1.7;
+    margin-bottom: 28px;
+    max-width: 400px;
+  }
+
+  .cta-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .cta-detail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    opacity: 0.9;
+  }
+
+  .cta-dot {
+    width: 6px; height: 6px;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 16px 32px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: all 0.25s;
+  }
+
+  .cta-btn:hover { background: var(--gold); color: white; }
+
+  .retry-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1.5px solid rgba(26,26,46,0.2);
+    padding: 16px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 1px;
+    margin-top: 16px;
+    transition: all 0.2s;
+  }
+
+  .retry-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-in {
+    animation: slideIn 0.4s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @media (max-width: 480px) {
+    .result-card { padding: 36px 28px; }
+    .cta-block { padding: 32px 28px; }
+    h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="container">
+    <div class="corner-deco">PM</div>
+    <p class="tag-line">PM 職涯診斷 ✦ 2026</p>
+    <div class="deco-line"></div>
+    <h1>你是哪種<em>PM 溝通型？</em></h1>
+    <p class="subtitle">5 個情境問題，揭開你在跨部門溝通與專案推進中的真實樣貌——以及你最需要強化的一塊。</p>
+    <button class="start-btn" onclick="startQuiz()">
+      開始測驗
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz">
+  <div class="container">
+    <div class="progress-bar-wrap">
+      <div class="progress-meta">
+        <span id="progress-text">問題 1 / 5</span>
+        <span id="progress-pct">20%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:20%"></div>
+      </div>
+    </div>
+    <div id="question-area"></div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result">
+  <div class="container">
+    <div id="result-content"></div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "跨部門會議開完，大家表面點頭，但事後發現根本沒人動。你的第一反應是？",
+    options: [
+      { text: "馬上 follow up 寄出會議記錄，把每個 action item 和 owner 寫清楚", type: "A" },
+      { text: "私下找關鍵 stakeholder 聊，了解他們在卡什麼", type: "B" },
+      { text: "先檢討會議本身——是不是決策不夠清晰、沒有明確共識", type: "C" },
+      { text: "向主管反映，請他出面推動", type: "D" },
+    ]
+  },
+  {
+    q: "你在提案簡報，主管突然問了一個你沒預料到的問題，資料也沒準備。你怎麼辦？",
+    options: [
+      { text: "坦白說「這部分我還需要確認，我會在 24 小時內回覆您」", type: "B" },
+      { text: "用手邊有的資料現場推算，給出一個有根據的大概估計", type: "A" },
+      { text: "把問題轉化成「這是個好問題，代表我們需要更深入研究…」進行討論", type: "C" },
+      { text: "有點慌，稍微說了幾句就把話題帶回原本的簡報內容", type: "D" },
+    ]
+  },
+  {
+    q: "另一個部門的同事，因為立場不同，一直不配合你的專案。你通常怎麼處理？",
+    options: [
+      { text: "直接約對方一對一，搞清楚他真正的顧慮是什麼", type: "B" },
+      { text: "找到對他有利的切入點，讓他看到配合的好處", type: "C" },
+      { text: "升級給雙方主管協調，避免問題拖太久", type: "D" },
+      { text: "把相關資訊整理好，用數據說服他這樣做對整體最好", type: "A" },
+    ]
+  },
+  {
+    q: "你的專案簡報要向高層報告。你準備時最在意的是？",
+    options: [
+      { text: "時程、成本、風險都要一目了然，不能有漏洞", type: "A" },
+      { text: "開場要先讓他們有感，再帶出數字和邏輯", type: "C" },
+      { text: "預想他們可能會問的問題，提前準備答案", type: "B" },
+      { text: "頁數不要太多，重點濃縮，別浪費他們時間", type: "D" },
+    ]
+  },
+  {
+    q: "專案快到 deadline，突然有個 issue 冒出來，可能影響交期。你第一步做什麼？",
+    options: [
+      { text: "先快速評估影響範圍，同步整理幾個解法選項再報告", type: "A" },
+      { text: "馬上告知主管和相關 stakeholder，讓大家知道現況", type: "B" },
+      { text: "先穩住團隊情緒，再一起討論怎麼解決", type: "C" },
+      { text: "先嘗試自己解決，能扛就扛，不到最後不驚動別人", type: "D" },
+    ]
+  },
+];
+
+const results = {
+  A: {
+    emoji: "📊",
+    type: "數據驅動型 PM",
+    title: "數據驅動型",
+    subtitle: "沉穩的決策者",
+    desc: "你習慣用結構與數字來說話，開會前準備充分、後續 follow up 到位。你的簡報邏輯嚴密，讓人信服。不過，在面對「人」的問題時，有時過度依賴數據而忽略情感共識——這正是跨部門溝通最難的地方。",
+    traits: ["結構清晰", "數字敏感", "執行紀律高", "有時過於理性"],
+    strengths: [
+      { icon: "📋", title: "專案全貌掌握度高", desc: "時程、成本、風險都能清楚呈現，是簡報時的一大優勢。" },
+      { icon: "📌", title: "Follow-up 精準", desc: "能把 action item 落實，不讓事情在口頭上消失。" },
+      { icon: "⚡", title: "待強化：說服力", desc: "試著在數據前加上一個「有共感的開場」，效果會大不同。" },
+    ]
+  },
+  B: {
+    emoji: "🎯",
+    type: "外交官型 PM",
+    title: "外交官型",
+    subtitle: "洞察人心的關係建立者",
+    desc: "你天生擅長讀懂別人的顧慮，習慣在正式會議前先做人際鋪墊。跨部門合作對你來說是解謎，你會找到每個人的利益點再推動。但有時候，你可能在「讓所有人都舒服」這件事上花太多時間，反而讓決策變慢。",
+    traits: ["善於傾聽", "敏感度高", "關係建立強", "決策有時較保守"],
+    strengths: [
+      { icon: "🤝", title: "跨部門信任感強", desc: "一對一溝通是你的強項，能讓對方真正開口說出卡點。" },
+      { icon: "🧭", title: "能預見衝突並提前化解", desc: "你比多數 PM 更早察覺到潛在的阻力。" },
+      { icon: "⚡", title: "待強化：主動推進決策", desc: "在適當時機，需要更有力地提出立場，而不是永遠在協調。" },
+    ]
+  },
+  C: {
+    emoji: "💡",
+    type: "策略思考型 PM",
+    title: "策略思考型",
+    subtitle: "洞見與框架的建構者",
+    desc: "你不只執行，你習慣在事情發生前先思考「為什麼」。在開會時你能提出讓人眼睛一亮的架構，簡報也能抓住高層的注意力。但你的挑戰是：想太多、動太慢，有時會讓團隊等待你的決策。",
+    traits: ["全局觀強", "善用框架", "簡報有說服力", "執行節奏有時偏慢"],
+    strengths: [
+      { icon: "🗺️", title: "簡報結構有說服力", desc: "你懂得用對的框架呈現複雜資訊，讓高層能快速理解。" },
+      { icon: "🔭", title: "善於預見問題", desc: "在別人看到危機前，你往往已經在思考解法。" },
+      { icon: "⚡", title: "待強化：快速行動", desc: "好的框架 + 快速執行 = 頂尖 PM。試著給自己設定「夠好就推進」的標準。" },
+    ]
+  },
+  D: {
+    emoji: "🔥",
+    type: "滅火隊型 PM",
+    title: "滅火隊型",
+    subtitle: "危機中的穩定力量",
+    desc: "你在高壓下依然冷靜，是團隊最依賴的定心丸。你務實、不喜歡繞圈子，遇到問題就想快速解決。不過，「不到最後不驚動別人」的習慣，有時會讓你陷入孤軍奮戰——而跨部門溝通需要的，正是主動拉人進來的勇氣。",
+    traits: ["抗壓性高", "務實執行", "不喜歡繁瑣流程", "有時過度獨立作戰"],
+    strengths: [
+      { icon: "🧯", title: "危機處理能力強", desc: "出事時你不慌，能快速穩住局面是難得的特質。" },
+      { icon: "⚡", title: "執行速度快", desc: "你不拖泥帶水，能讓事情動起來。" },
+      { icon: "💬", title: "待強化：主動溝通透明度", desc: "讓 stakeholder 即時知道狀況，比你自己扛更能建立信任。" },
+    ]
+  },
+};
+
+let currentQ = 0;
+let scores = { A: 0, B: 0, C: 0, D: 0 };
+
+function startQuiz() {
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  const pct = Math.round(((currentQ + 1) / questions.length) * 100);
+  document.getElementById('progress-text').textContent = `問題 ${currentQ + 1} / ${questions.length}`;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  const letters = ['A', 'B', 'C', 'D'];
+  const html = `
+    <div class="slide-in">
+      <p class="q-number">Q${String(currentQ + 1).padStart(2,'0')}</p>
+      <h2 class="question-text">${q.q}</h2>
+      <div class="options">
+        ${q.options.map((opt, i) => `
+          <button class="option-btn" onclick="selectOption(this, '${opt.type}')">
+            <span class="option-letter">${letters[i]}</span>
+            <span class="option-text">${opt.text}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('question-area').innerHTML = html;
+}
+
+function selectOption(btn, type) {
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  scores[type]++;
+
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < questions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 420);
+}
+
+function showResult() {
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('result').style.display = 'block';
+
+  const topType = Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+  const r = results[topType];
+
+  document.getElementById('result-content').innerHTML = `
+    <div class="fade-in">
+      <p class="tag-line" style="margin-bottom:20px;">✦ 你的診斷結果</p>
+
+      <div class="result-card" data-emoji="${r.emoji}">
+        <p class="result-label">PM 溝通型態</p>
+        <h2 class="result-type">${r.emoji} ${r.title}<br><span>${r.subtitle}</span></h2>
+        <p class="result-desc">${r.desc}</p>
+        <div class="traits">
+          ${r.traits.map(t => `<span class="trait-tag">${t}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="strength-section">
+        <p class="section-label">你的優勢與成長點</p>
+        ${r.strengths.map(s => `
+          <div class="strength-item">
+            <div class="strength-icon">${s.icon}</div>
+            <div class="strength-text">
+              <h4>${s.title}</h4>
+              <p>${s.desc}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="cta-block">
+        <span class="cta-badge">限額工作坊</span>
+        <h3>想把「待強化」<br>變成你的核心競爭力？</h3>
+        <p>3/28 實戰工作坊，4 位資深 PM 導師帶你從跨部門溝通到專案簡報，一次拉升軟實力——還剩少數名額。</p>
+        <div class="cta-details">
+          <div class="cta-detail"><span class="cta-dot"></span>日期：2026/03/28（週六）09:30–17:00</div>
+          <div class="cta-detail"><span class="cta-dot"></span>地點：台北捷運站附近教室</div>
+          <div class="cta-detail"><span class="cta-dot"></span>名額限 20 人 ✦ 3/8 截止報名</div>
+        </div>
+        <a class="cta-btn" href="https://docs.google.com/forms/d/e/1FAIpQLSeEUKHMWJrIeD_1TTYoJ5KSE7rjeaOUJrUzGtRF_raP_spD_g/viewform" target="_blank">
+          立即報名 →
+        </a>
+      </div>
+
+      <button class="retry-btn" onclick="retryQuiz()">↩ 重新測驗</button>
+    </div>
+  `;
+}
+
+function retryQuiz() {
+  currentQ = 0;
+  scores = { A: 0, B: 0, C: 0, D: 0 };
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('intro').style.display = 'flex';
+}
+</script>
+</body>
+</html>
